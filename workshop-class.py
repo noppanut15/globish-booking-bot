@@ -60,13 +60,10 @@ class GlobishBookingBot:
         response = requests.post(f"{self.book_class_url}{class_id}", headers=self.headers)
         response_dict = response.json()
         if response_dict['statusCode'] == 201:
-            logging.info(f"Booked class: {class_topic}")
-            logging.info(f"ID: {class_id}")
+            logging.info(f"Booked class: [#{class_id}] {class_topic}")
         else:
             # TODO: Add error handling (notify user)
-            logging.error(f"Failed to book class: {class_topic}")
-            logging.error(response_dict)
-        logging.info("-" * 50)
+            logging.error(f"Failed to book class: [#{class_id}] {class_topic}\n{response_dict}")
 
     def book_available_classes(self, url):
         classes = self.get_classes(url)
