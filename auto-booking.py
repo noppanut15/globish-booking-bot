@@ -58,6 +58,7 @@ class GlobishBookingBot:
     def check_token(self):
         response = requests.get(self.workshop_class_url, headers=self.headers)
         if response.status_code == 401:
+            # TODO: Add error handling (notify user)
             logging.error("Invalid token. Please check your GB_TOKEN in the .env file.")
             raise ValueError("Invalid token. Please check your GB_TOKEN in the .env file.")
         response.raise_for_status()
