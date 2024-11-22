@@ -39,8 +39,20 @@ class GlobishBookingBot:
             'x-lang': 'en',
             'x-requested-with': 'XMLHttpRequest'
         }
+        self.ignored_ids = self.load_ignored_ids()
         self.check_token()
         logging.info("Globish Booking Bot initialized.")
+
+
+    def load_ignored_ids(self):
+        try:
+            with open('ignored_ids.txt', 'r') as file:
+                ignored_ids = {line.strip() for line in file}
+                logging.debug(f"Ignored Class IDs: {ignored_ids}")
+                return ignored_ids
+        except FileNotFoundError:
+            logging.warning("ignored_ids.txt file not found. No Class IDs will be ignored.")
+            return set()
 
 
     def check_token(self):
@@ -60,15 +72,16 @@ class GlobishBookingBot:
         response = requests.post(f"{self.book_class_url}{class_id}", headers=self.headers)
         response_dict = response.json()
         if response_dict['statusCode'] == 201:
-            logging.info(f"Booked class: [#{class_id}] {class_topic}")
+            logging.info(f"Booked class: #[{class_id}] {class_topic}")
         else:
             # TODO: Add error handling (notify user)
-            logging.error(f"Failed to book class: [#{class_id}] {class_topic}\n{response_dict}")
+            logging.error(f"Failed to book class: #[{class_id}] {class_topic}\n{response_dict}")
 
     def book_available_classes(self, url):
         classes = self.get_classes(url)
         for class_ in classes:
-            if not class_['booked']:
+            if not class_['booked'] and str(class_['id']) not in self.ignored_ids:
+                logging.debug(f"Available class: #[{class_['id']}] {class_['topic']}")
                 self.book_class(class_['id'], class_['topic'])
 
     def book_workshop(self):
