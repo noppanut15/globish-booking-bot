@@ -1,14 +1,24 @@
-import requests
-import dotenv
+"""
+Module for Globish Booking Bot.
+
+This module provides functionality to automate the booking of classes on the Globish platform.
+It includes methods to load ignored class IDs, check the validity of the token, 
+retrieve available classes, and book classes.
+
+Classes:
+    GlobishBookingBot: A bot for booking classes on Globish.
+"""
+
 import os
 import logging
-from pprint import pprint
+import dotenv
+import requests
 
 # Load environment variables from .env file
 dotenv.load_dotenv()
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, 
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     handlers=[
                         logging.FileHandler('globish_booking_bot.log'),
@@ -16,7 +26,22 @@ logging.basicConfig(level=logging.INFO,
                     ])
 
 class GlobishBookingBot:
+    """
+    A bot for booking classes on the Globish platform.
+
+    This class provides methods to load ignored class IDs, check the validity of the token,
+    retrieve available classes, and book classes.
+
+    Attributes:
+        workshop_class_url (str): URL for fetching workshop classes.
+        masterclass_url (str): URL for fetching masterclass classes.
+        book_class_url (str): URL for booking a class.
+        token (str): Authorization token for API requests.
+        headers (dict): Headers for API requests.
+        ignored_ids (set): Set of ignored class IDs.
+    """
     def __init__(self):
+        """Initialize the bot with URLs and headers."""
         self.workshop_class_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=workshop&campaign=workshop&language=en'
         self.masterclass_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=master-class&campaign=master-class&language=en'
         self.book_class_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass/'
@@ -45,10 +70,11 @@ class GlobishBookingBot:
 
 
     def load_ignored_ids(self):
+        """Load ignored class IDs from a file."""
         try:
-            with open('ignored_ids.txt', 'r') as file:
+            with open('ignored_ids.txt', 'r', encoding='utf-8') as file:
                 ignored_ids = {line.strip() for line in file}
-                logging.debug(f"Ignored Class IDs: {ignored_ids}")
+                logging.debug("Ignored Class IDs: %s", ignored_ids)
                 return ignored_ids
         except FileNotFoundError:
             logging.warning("ignored_ids.txt file not found. No Class IDs will be ignored.")
@@ -56,7 +82,8 @@ class GlobishBookingBot:
 
 
     def check_token(self):
-        response = requests.get(self.workshop_class_url, headers=self.headers)
+        """Check if the token is valid."""
+        response = requests.get(self.workshop_class_url, headers=self.headers, timeout=10)
         if response.status_code == 401:
             # TODO: Add error handling (notify user)
             logging.error("Invalid token. Please check your GB_TOKEN in the .env file.")
@@ -65,30 +92,35 @@ class GlobishBookingBot:
 
 
     def get_classes(self, url):
-        response = requests.get(url, headers=self.headers)
+        """Get classes from the given URL."""
+        response = requests.get(url, headers=self.headers, timeout=10)
         response.raise_for_status()
         return response.json()['data']['classes']
 
     def book_class(self, class_id, class_topic):
-        response = requests.post(f"{self.book_class_url}{class_id}", headers=self.headers)
+        """Book a class given its ID and topic."""
+        response = requests.post(f"{self.book_class_url}{class_id}", headers=self.headers, timeout=10)
         response_dict = response.json()
         if response_dict['statusCode'] == 201:
-            logging.info(f"Booked class: #[{class_id}] {class_topic}")
+            logging.info("Booked class: #[%s] %s", class_id, class_topic)
         else:
             # TODO: Add error handling (notify user)
-            logging.error(f"Failed to book class: #[{class_id}] {class_topic}\n{response_dict}")
+            logging.error("Failed to book class: #[%s] %s\n%s", class_id, class_topic, response_dict)
 
     def book_available_classes(self, url):
+        """Book available classes from the given URL."""
         classes = self.get_classes(url)
         for class_ in classes:
             if not class_['booked'] and str(class_['id']) not in self.ignored_ids:
-                logging.debug(f"Available class: #[{class_['id']}] {class_['topic']}")
+                logging.debug("Available class: #[%s] %s", class_['id'], class_['topic'])
                 self.book_class(class_['id'], class_['topic'])
 
     def book_workshop(self):
+        """Book available Workshop classes."""
         self.book_available_classes(self.workshop_class_url)
-    
+
     def book_masterclass(self):
+        """Book available Master Class classes."""
         self.book_available_classes(self.masterclass_url)
 
 if __name__ == "__main__":
