@@ -134,6 +134,7 @@ class GlobishBookingBot:
         response = requests.post(f"{self.book_class_url}{class_id}", headers=self.headers, timeout=10, impersonate="chrome123")
         response_dict = response.json()
         if response_dict['statusCode'] == 201:
+            self.messenger.send_message(f"Booked class: #[{class_id}] {class_topic}")
             logging.info("Booked class: #[%s] %s", class_id, class_topic)
         else:
             self.messenger.send_message(f"Failed to book class, adding to the ignored list: #[{class_id}] {class_topic}\n```{response_dict}```")
