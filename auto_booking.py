@@ -44,6 +44,7 @@ class GlobishBookingBot:
     """
     def __init__(self):
         """Initialize the bot with URLs and headers."""
+        logging.info("Initializing Globish Booking Bot...")
         self.workshop_class_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=workshop&campaign=workshop&language=en'
         self.masterclass_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=master-class&campaign=master-class&language=en'
         self.book_class_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass/'
@@ -126,10 +127,12 @@ class GlobishBookingBot:
 
     def book_workshop(self):
         """Book available Workshop classes."""
+        logging.info("Finding available Workshop classes...")
         self.book_available_classes(self.workshop_class_url)
 
     def book_masterclass(self):
         """Book available Master Class classes."""
+        logging.info("Finding available Master Class classes...")
         self.book_available_classes(self.masterclass_url)
 
 if __name__ == "__main__":
