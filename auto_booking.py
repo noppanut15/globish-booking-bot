@@ -67,10 +67,9 @@ class GlobishBookingBot:
             'x-requested-with': 'XMLHttpRequest'
         }
         self.ignored_ids = self.load_ignored_ids()
-        self.check_token()
         self.time_delay = 5
+        self.check_token()
         logging.info("Globish Booking Bot initialized.")
-        time.sleep(self.time_delay)
 
 
     def load_ignored_ids(self):
@@ -96,6 +95,7 @@ class GlobishBookingBot:
             logging.error("404 Client Error: Not Found - Impersonation failed.")
             raise ConnectionRefusedError("404 Client Error: Not Found - Impersonation failed.")
         response.raise_for_status()
+        time.sleep(self.time_delay)
 
 
     def get_classes(self, url):
