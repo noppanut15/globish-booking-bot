@@ -12,7 +12,6 @@ Classes:
 import os
 import logging
 import dotenv
-# import requests
 from curl_cffi import requests
 
 # Load environment variables from .env file

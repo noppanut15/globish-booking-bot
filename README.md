@@ -5,7 +5,7 @@ This script automates the booking of classes on the Globish platform. It uses th
 ## Prerequisites
 
 - Python 3
-- `requests` library
+- `curl_cffi` library
 - `python-dotenv` library
 
 ## Setup
