@@ -10,6 +10,7 @@ Classes:
 """
 
 import os
+import time
 import logging
 import dotenv
 from curl_cffi import requests
@@ -39,6 +40,7 @@ class GlobishBookingBot:
         token (str): Authorization token for API requests.
         headers (dict): Headers for API requests.
         ignored_ids (set): Set of ignored class IDs.
+        time_delay (int): Time delay between requests.
     """
     def __init__(self):
         """Initialize the bot with URLs and headers."""
@@ -66,7 +68,9 @@ class GlobishBookingBot:
         }
         self.ignored_ids = self.load_ignored_ids()
         self.check_token()
+        self.time_delay = 5
         logging.info("Globish Booking Bot initialized.")
+        time.sleep(self.time_delay)
 
 
     def load_ignored_ids(self):
@@ -98,6 +102,7 @@ class GlobishBookingBot:
         """Get classes from the given URL."""
         response = requests.get(url, headers=self.headers, timeout=10, impersonate="chrome123")
         response.raise_for_status()
+        time.sleep(self.time_delay)
         return response.json()['data']['classes']
 
     def book_class(self, class_id, class_topic):
@@ -109,6 +114,7 @@ class GlobishBookingBot:
         else:
             # TODO: Add error handling (notify user)
             logging.error("Failed to book class: #[%s] %s\n%s", class_id, class_topic, response_dict)
+        time.sleep(self.time_delay)
 
     def book_available_classes(self, url):
         """Book available classes from the given URL."""
@@ -128,5 +134,5 @@ class GlobishBookingBot:
 
 if __name__ == "__main__":
     bot = GlobishBookingBot()
-    bot.book_masterclass()
     bot.book_workshop()
+    bot.book_masterclass()
