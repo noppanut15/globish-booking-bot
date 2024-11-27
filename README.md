@@ -44,6 +44,15 @@ Run the script to start booking available Workshops and Master Classes:
 python auto_booking.py
 ```
 
+Alternatively, you can schedule the script to run periodically using crontab:
+```sh
+crontab -e
+```
+```
+00-59/2 18 * * 2,4 /home/toppy/git/auto_run.sh  # This example runs the script every 2 minutes between 18:00 and 18:59 on Tuesdays and Thursdays.
+```
+For an example of the shell script used with crontab, please refer to `scripts/auto_run.sh.example`.
+
 ## Logging
 The script logs its activity to `globish_booking_bot.log` and also outputs to the console.
 
