@@ -88,6 +88,9 @@ class GlobishBookingBot:
             # TODO: Add error handling (notify user)
             logging.error("Invalid token. Please check your GB_TOKEN in the .env file.")
             raise ValueError("Invalid token. Please check your GB_TOKEN in the .env file.")
+        if response.status_code == 404:
+            logging.error("404 Client Error: Not Found - Impersonation failed.")
+            raise ConnectionRefusedError("404 Client Error: Not Found - Impersonation failed.")
         response.raise_for_status()
 
 
