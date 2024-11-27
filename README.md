@@ -25,21 +25,34 @@ This script automates the booking of classes on the Globish platform. It uses th
     pip install -r requirements.txt
     ```
 
-4. Create a `.env` file in the root directory and add your Globish token:
+4. Create a `.env` file in the root directory and add your Globish token and Slack credentials:
 
     ```env
-    GB_TOKEN=your_globish_token_here
+    GB_BOT_TOKEN=your_globish_token_here
+    GB_BOT_SLACK_TOKEN=your_slack_token_here
+    GB_BOT_SLACK_CHANNEL=your_slack_channel_id_here
     ```
 
-5. Create an `ignored_ids.txt` file in the root directory to specify class IDs that should be ignored during booking. Each line should contain one class ID.
+5. Create an `ignored_ids.txt` file in the root directory to specify class IDs that should be ignored during booking. Each line should contain one class ID. 
+    > **Important Note:** Ensure there is always a blank line at the end of the `ignored_ids.txt` file, should you change this file manually.
 
 ## Usage
 
 Run the script to start booking available Workshops and Master Classes:
 
 ```sh
-python auto-booking.py
+python auto_booking.py
 ```
 
 ## Logging
 The script logs its activity to `globish_booking_bot.log` and also outputs to the console.
+
+## Troubleshooting
+
+If the script encounters an issue and creates a `.crash.flag` file, you need to resolve the issue and then remove the `.crash.flag` file to allow the script to execute again: 
+
+```sh
+rm .crash.flag
+```
+
+> **Note:** The `.crash.flag` file is generated to prevent the script from repeatedly running and consuming API requests when invoked by crontab. Ensure that all issues are resolved before deleting this file.
