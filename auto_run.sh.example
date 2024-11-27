@@ -1,0 +1,10 @@
+# This script can be used to run the auto_booking.py by cron job
+#################################################################
+
+#!/bin/bash
+
+project_path="/home/toppy/git/globish-booking-bot/"
+cd "$project_path"
+source "venv/bin/activate"
+python_script="auto_booking.py"
+python "$python_script"
