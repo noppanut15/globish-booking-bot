@@ -12,7 +12,8 @@ Classes:
 import os
 import logging
 import dotenv
-import requests
+# import requests
+from curl_cffi import requests
 
 # Load environment variables from .env file
 dotenv.load_dotenv()
@@ -54,13 +55,13 @@ class GlobishBookingBot:
             'origin': 'https://app.globish.co.th',
             'priority': 'u=1, i',
             'referer': 'https://app.globish.co.th/',
-            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            'sec-ch-ua': '"Google Chrome";v="123", "Chromium";v="123", "Not_A Brand";v="24"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"macOS"',
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
-            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
             'x-lang': 'en',
             'x-requested-with': 'XMLHttpRequest'
         }
@@ -83,7 +84,7 @@ class GlobishBookingBot:
 
     def check_token(self):
         """Check if the token is valid."""
-        response = requests.get(self.workshop_class_url, headers=self.headers, timeout=10)
+        response = requests.get(self.workshop_class_url, headers=self.headers, timeout=10, impersonate="chrome123")
         if response.status_code == 401:
             # TODO: Add error handling (notify user)
             logging.error("Invalid token. Please check your GB_TOKEN in the .env file.")
@@ -93,13 +94,13 @@ class GlobishBookingBot:
 
     def get_classes(self, url):
         """Get classes from the given URL."""
-        response = requests.get(url, headers=self.headers, timeout=10)
+        response = requests.get(url, headers=self.headers, timeout=10, impersonate="chrome123")
         response.raise_for_status()
         return response.json()['data']['classes']
 
     def book_class(self, class_id, class_topic):
         """Book a class given its ID and topic."""
-        response = requests.post(f"{self.book_class_url}{class_id}", headers=self.headers, timeout=10)
+        response = requests.post(f"{self.book_class_url}{class_id}", headers=self.headers, timeout=10, impersonate="chrome123")
         response_dict = response.json()
         if response_dict['statusCode'] == 201:
             logging.info("Booked class: #[%s] %s", class_id, class_topic)
