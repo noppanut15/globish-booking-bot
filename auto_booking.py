@@ -14,9 +14,10 @@ import time
 import logging
 import dotenv
 from curl_cffi import requests
+from utils.slack import SlackMessenger
 
 # Load environment variables from .env file
-dotenv.load_dotenv()
+dotenv.load_dotenv(override=True)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
@@ -48,12 +49,12 @@ class GlobishBookingBot:
         self.workshop_class_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=workshop&campaign=workshop&language=en'
         self.masterclass_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=master-class&campaign=master-class&language=en'
         self.book_class_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass/'
-        self.token = os.getenv('GB_TOKEN')
+        self.messenger = SlackMessenger(token=os.getenv('GB_BOT_SLACK_TOKEN'), channel=os.getenv('GB_BOT_SLACK_CHANNEL'))
         self.headers = {
             'accept': 'application/json',
             'accept-language': 'en-US,en;q=0.9',
             'access-control-allow-origin': '*',
-            'authorization': f'Bearer {self.token}',
+            'authorization': f'Bearer {os.getenv('GB_BOT_TOKEN')}',
             'origin': 'https://app.globish.co.th',
             'priority': 'u=1, i',
             'referer': 'https://app.globish.co.th/',
@@ -69,6 +70,7 @@ class GlobishBookingBot:
         }
         self.ignored_ids = self.load_ignored_ids()
         self.time_delay = 5
+        self.check_previous_crash()
         self.check_token()
         logging.info("Globish Booking Bot initialized.")
 
@@ -84,20 +86,41 @@ class GlobishBookingBot:
             logging.warning("ignored_ids.txt file not found. No Class IDs will be ignored.")
             return set()
 
+    def check_previous_crash(self):
+        """Check if the bot crashed during the last run."""
+        if os.path.exists('.crash.flag'):
+            self.messenger.send_message("Bot crashed during the last run. Please check the logs.")
+            logging.error("Bot crashed during the last run, stopping execution.")
+            raise SystemExit("Bot crashed during the last run, stopping execution.")
+
+    def generate_crash_flag(self):
+        """Generate a crash flag file."""
+        with open('.crash.flag', 'w', encoding='utf-8'):
+            pass
+        logging.info("Crash flag file generated.")
 
     def check_token(self):
         """Check if the token is valid."""
         response = requests.get(self.workshop_class_url, headers=self.headers, timeout=10, impersonate="chrome123")
         if response.status_code == 401:
-            # TODO: Add error handling (notify user)
-            logging.error("Invalid token. Please check your GB_TOKEN in the .env file.")
-            raise ValueError("Invalid token. Please check your GB_TOKEN in the .env file.")
+            logging.error("Invalid token. Please check your GB_BOT_TOKEN in the .env file.")
+            self.messenger.send_message("Invalid token. Please check your GB_BOT_TOKEN in the .env file.")
+            self.generate_crash_flag()
+            raise ValueError("Invalid token. Please check your GB_BOT_TOKEN in the .env file.")
         if response.status_code == 404:
             logging.error("404 Client Error: Not Found - Impersonation failed.")
+            self.messenger.send_message("404 Client Error: Not Found - Impersonation failed.")
+            self.generate_crash_flag()
             raise ConnectionRefusedError("404 Client Error: Not Found - Impersonation failed.")
         response.raise_for_status()
         time.sleep(self.time_delay)
 
+    def add_ignored_id(self, class_id):
+        """Add a class ID to the ignored list."""
+        self.ignored_ids.add(class_id)
+        with open('ignored_ids.txt', 'a', encoding='utf-8') as file:
+            file.write(f"{class_id}\n")
+        logging.info("Added class ID to ignored list: %s", class_id)
 
     def get_classes(self, url):
         """Get classes from the given URL."""
@@ -113,8 +136,9 @@ class GlobishBookingBot:
         if response_dict['statusCode'] == 201:
             logging.info("Booked class: #[%s] %s", class_id, class_topic)
         else:
-            # TODO: Add error handling (notify user)
-            logging.error("Failed to book class: #[%s] %s\n%s", class_id, class_topic, response_dict)
+            self.messenger.send_message(f"Failed to book class, adding to the ignored list: #[{class_id}] {class_topic}\n```{response_dict}```")
+            logging.error("Failed to book class, adding to the ignored list: #[%s] %s\n%s", class_id, class_topic, response_dict)
+            self.add_ignored_id(str(class_id))
         time.sleep(self.time_delay)
 
     def book_available_classes(self, url):
