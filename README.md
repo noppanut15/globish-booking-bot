@@ -28,6 +28,8 @@ This script automates the booking of classes on the Globish platform. It uses th
 4. Create a `.env` file in the root directory and add your Globish token and Slack credentials:
 
     ```env
+    GB_BOT_USERNAME=your_globish_username_here
+    GB_BOT_PASSWORD=your_globish_password_here
     GB_BOT_TOKEN=your_globish_token_here
     GB_BOT_SLACK_TOKEN=your_slack_token_here
     GB_BOT_SLACK_CHANNEL=your_slack_channel_id_here
