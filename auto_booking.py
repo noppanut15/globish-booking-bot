@@ -46,7 +46,9 @@ class GlobishBookingBot:
     def __init__(self):
         """Initialize the bot with URLs and headers."""
         logging.info("Initializing Globish Booking Bot...")
+        self.crash_counter = 0
         self.urls = {
+            'password_login': 'https://api-student.globish.co.th/OAuth/Token?grantType=password&clientId=11',
             'workshop': 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=workshop&campaign=workshop&language=en',
             'masterclass': 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=master-class&campaign=master-class&language=en',
             'book_class': 'https://api-student.globish.co.th/Student/Booking/GroupClass/'
@@ -73,7 +75,7 @@ class GlobishBookingBot:
         self.ignored_ids = self.load_ignored_ids()
         self.time_delay = 5
         self.check_previous_crash()
-        # self.check_token()
+        self.check_token()
         logging.info("Globish Booking Bot initialized.")
 
 
@@ -87,6 +89,34 @@ class GlobishBookingBot:
         except FileNotFoundError:
             logging.warning("ignored_ids.txt file not found. No Class IDs will be ignored.")
             return set()
+
+    def update_env_file(self, key, value):
+        """Update the .env file with a new key-value pair."""
+        os.environ[key] = value
+        dotenv.set_key('.env', key, value)
+
+    def refresh_token(self):
+        """Refresh the authorization token."""
+        data = {"username": os.getenv('GB_BOT_USERNAME'), "password": os.getenv('GB_BOT_PASSWORD')}
+        response = requests.post(self.urls['password_login'], headers=self.headers, data=data, timeout=10, impersonate="chrome123")
+
+        if response.status_code == 401:
+            logging.error("Invalid credentials. Please check your GB_BOT_USERNAME and GB_BOT_PASSWORD in the .env file.")
+            self.messenger.send_message("Invalid credentials. Please check your GB_BOT_USERNAME and GB_BOT_PASSWORD in the .env file.")
+            self.generate_crash_flag()
+            raise ValueError("Invalid credentials. Please check your GB_BOT_USERNAME and GB_BOT_PASSWORD in the .env file.")
+        if response.status_code != 201:
+            logging.error("[HTTP response code: %s] Token refresh failed. Please check the logs.", response.status_code)
+            self.messenger.send_message(f"[HTTP response code: {response.status_code}] Token refresh failed. Please check the logs.")
+            self.generate_crash_flag()
+            raise ValueError("Token refresh failed. Please check the logs.")
+        response.raise_for_status()
+
+        new_token = response.json()["data"]
+        self.headers['authorization'] = f'Bearer {new_token}'
+        self.update_env_file('GB_BOT_TOKEN', new_token)
+        logging.info("Token refreshed.")
+        time.sleep(self.time_delay)
 
     def check_previous_crash(self):
         """Check if the bot crashed during the last run."""
@@ -104,18 +134,18 @@ class GlobishBookingBot:
     def check_token(self):
         """Check if the token is valid."""
         response = requests.get(self.urls['workshop'], headers=self.headers, timeout=10, impersonate="chrome123")
-        if response.status_code == 401:
-            logging.error("Invalid token. Please check your GB_BOT_TOKEN in the .env file.")
-            self.messenger.send_message("Invalid token. Please check your GB_BOT_TOKEN in the .env file.")
+        if response.status_code == 200:
+            time.sleep(self.time_delay)
+        elif response.status_code in [401, 404] and self.crash_counter == 0:
+            logging.warning("Token expired. Refreshing token...")
+            self.refresh_token()
+            self.crash_counter += 1
+            self.check_token()
+        else:
+            logging.error("[HTTP response code: %s] Auto healing failed. Could be due to impersonation failure. Please check the logs.", response.status_code)
+            self.messenger.send_message(f"[HTTP response code: {response.status_code}] Auto healing failed. Could be due to impersonation failure. Please check the logs.")
             self.generate_crash_flag()
-            raise ValueError("Invalid token. Please check your GB_BOT_TOKEN in the .env file.")
-        if response.status_code == 404:
-            logging.error("404 Client Error: Not Found - Impersonation failed.")
-            self.messenger.send_message("404 Client Error: Not Found - Impersonation failed.")
-            self.generate_crash_flag()
-            raise ConnectionRefusedError("404 Client Error: Not Found - Impersonation failed.")
-        response.raise_for_status()
-        time.sleep(self.time_delay)
+            raise ValueError("Auto healing failed. Could be due to impersonation failure. Please check the logs.")
 
     def add_ignored_id(self, class_id):
         """Add a class ID to the ignored list."""
@@ -164,5 +194,5 @@ class GlobishBookingBot:
 
 if __name__ == "__main__":
     bot = GlobishBookingBot()
-    # bot.book_workshop()
-    # bot.book_masterclass()
+    bot.book_workshop()
+    bot.book_masterclass()
