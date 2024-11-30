@@ -46,9 +46,11 @@ class GlobishBookingBot:
     def __init__(self):
         """Initialize the bot with URLs and headers."""
         logging.info("Initializing Globish Booking Bot...")
-        self.workshop_class_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=workshop&campaign=workshop&language=en'
-        self.masterclass_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=master-class&campaign=master-class&language=en'
-        self.book_class_url = 'https://api-student.globish.co.th/Student/Booking/GroupClass/'
+        self.urls = {
+            'workshop': 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=workshop&campaign=workshop&language=en',
+            'masterclass': 'https://api-student.globish.co.th/Student/Booking/GroupClass?type=master-class&campaign=master-class&language=en',
+            'book_class': 'https://api-student.globish.co.th/Student/Booking/GroupClass/'
+        }
         self.messenger = SlackMessenger(token=os.getenv('GB_BOT_SLACK_TOKEN'), channel=os.getenv('GB_BOT_SLACK_CHANNEL'))
         self.headers = {
             'accept': 'application/json',
@@ -71,7 +73,7 @@ class GlobishBookingBot:
         self.ignored_ids = self.load_ignored_ids()
         self.time_delay = 5
         self.check_previous_crash()
-        self.check_token()
+        # self.check_token()
         logging.info("Globish Booking Bot initialized.")
 
 
@@ -101,7 +103,7 @@ class GlobishBookingBot:
 
     def check_token(self):
         """Check if the token is valid."""
-        response = requests.get(self.workshop_class_url, headers=self.headers, timeout=10, impersonate="chrome123")
+        response = requests.get(self.urls['workshop'], headers=self.headers, timeout=10, impersonate="chrome123")
         if response.status_code == 401:
             logging.error("Invalid token. Please check your GB_BOT_TOKEN in the .env file.")
             self.messenger.send_message("Invalid token. Please check your GB_BOT_TOKEN in the .env file.")
@@ -131,7 +133,7 @@ class GlobishBookingBot:
 
     def book_class(self, class_id, class_topic):
         """Book a class given its ID and topic."""
-        response = requests.post(f"{self.book_class_url}{class_id}", headers=self.headers, timeout=10, impersonate="chrome123")
+        response = requests.post(f"{self.urls['book_class']}{class_id}", headers=self.headers, timeout=10, impersonate="chrome123")
         response_dict = response.json()
         if response_dict['statusCode'] == 201:
             self.messenger.send_message(f"Booked class: #[{class_id}] {class_topic}")
@@ -153,14 +155,14 @@ class GlobishBookingBot:
     def book_workshop(self):
         """Book available Workshop classes."""
         logging.info("Finding available Workshop classes...")
-        self.book_available_classes(self.workshop_class_url)
+        self.book_available_classes(self.urls['workshop'])
 
     def book_masterclass(self):
         """Book available Master Class classes."""
         logging.info("Finding available Master Class classes...")
-        self.book_available_classes(self.masterclass_url)
+        self.book_available_classes(self.urls['masterclass'])
 
 if __name__ == "__main__":
     bot = GlobishBookingBot()
-    bot.book_workshop()
-    bot.book_masterclass()
+    # bot.book_workshop()
+    # bot.book_masterclass()
