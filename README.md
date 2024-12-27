@@ -4,9 +4,9 @@ This script automates the booking of classes on the Globish platform. It uses th
 
 ## Prerequisites
 
-- Python 3
-- `curl_cffi` library
-- `python-dotenv` library
+- Python 3 with package manager (pip)
+- A Globish account with a valid token
+- A Slack account with a valid token and a channel ID for notifications
 
 ## Setup
 
@@ -54,6 +54,7 @@ crontab -e
 00-10,12-59/2 18 * * 1-5 /home/toppy/git/auto_run.sh  # This example runs the script every 1 minute between 6:00 PM and 6:10 PM, and then every 2 minutes between 6:12 PM and 6:59 PM from Monday to Friday.
 ```
 For an example of the shell script used with crontab, please refer to `scripts/auto_run.sh.example`.
+> **Important Note:** Good citizenship is important. Please do not run the script too frequently, as it may overload the Globish server.
 
 ## Logging
 The script logs its activity to `globish_booking_bot.log` and also outputs to the console.
