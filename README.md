@@ -68,3 +68,8 @@ rm .crash.flag
 ```
 
 > **Note:** The `.crash.flag` file is generated to prevent the script from repeatedly running and consuming API requests when invoked by crontab. Ensure that all issues are resolved before deleting this file.
+
+## Disclaimer
+This Globish Booking Bot is intended for legitimate and ethical use in finding and enrolling in available workshops and master classes.
+
+The developers of this bot are not responsible for any misuse or legal actions arising from its use. Please use this bot responsibly and ethically.
